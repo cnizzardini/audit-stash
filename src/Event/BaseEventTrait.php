@@ -2,6 +2,8 @@
 
 namespace AuditStash\Event;
 
+use Cake\Datasource\EntityInterface;
+
 /**
  * Implements most of the methods of the EventInterface.
  */
@@ -48,6 +50,13 @@ trait BaseEventTrait
      * @var array
      */
     protected $meta = [];
+
+    /**
+     * The entity associated with the event.
+     *
+     * @var EntityInterface|null
+     */
+    protected $entity;
 
     /**
      * Returns the global transaction id in which this event is contained.
@@ -132,5 +141,15 @@ trait BaseEventTrait
     public function setMetaInfo($meta)
     {
         $this->meta = $meta;
+    }
+
+    /**
+     * Returns the Entity.
+     *
+     * @return EntityInterface|null
+     */
+    public function getEntity()
+    {
+        return $this->entity;
     }
 }

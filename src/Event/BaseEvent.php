@@ -3,11 +3,12 @@
 namespace AuditStash\Event;
 
 use AuditStash\EventInterface;
+use Cake\Datasource\EntityInterface;
 use DateTime;
 
 /**
  * Represents a change in the repository where the list of changes can be
- * tracked as a list of properties and their values.
+ * tracked as a list of properties and thier values.
  */
 abstract class BaseEvent implements EventInterface
 {
@@ -31,13 +32,14 @@ abstract class BaseEvent implements EventInterface
     /**
      * Construnctor.
      *
-     * @param string $transationId The global transaction id
-     * @param mixed $id The entities primary key
-     * @param string $source The name of the source (table)
+     * @param string $transactionId The global transaction id
+     * @param mixed $id The primary key record that got deleted
+     * @param string $source The name of the source (table) where the record was deleted
      * @param array $changed The array of changes that got detected for the entity
      * @param array $original The original values the entity had before it got changed
+     * @param EntityInterface|null $entity
      */
-    public function __construct($transactionId, $id, $source, $changed, $original)
+    public function __construct($transactionId, $id, $source, $changed, $original, $entity = null)
     {
         $this->transactionId = $transactionId;
         $this->id = $id;
@@ -45,6 +47,7 @@ abstract class BaseEvent implements EventInterface
         $this->changed = $changed;
         $this->original = $original;
         $this->timestamp = (new DateTime())->format(DateTime::ATOM);
+        $this->entity = $entity;
     }
 
     /**
@@ -75,11 +78,11 @@ abstract class BaseEvent implements EventInterface
     abstract public function getEventType();
 
     /**
-     * Returns the array to be used for encoding this object as json.
+     * Returns he array to be used for encoding this object as json.
      *
      * @return array
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return $this->basicSerialize() + [
             'original' => $this->original,
