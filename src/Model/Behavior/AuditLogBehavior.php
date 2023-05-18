@@ -204,7 +204,7 @@ class AuditLogBehavior extends Behavior
              * @todo: I hope this can go away. I was not sure how to pass configs into the TablePersister.
              */
             if (in_array(InstanceConfigTrait::class, class_uses($persister))) {
-                $persister->setConfig(Configure::read('AuditStash.perister_config') ?? []);
+                $persister->setConfig(Configure::read('AuditStash.persister_config') ?? []);
             }
         }
 
