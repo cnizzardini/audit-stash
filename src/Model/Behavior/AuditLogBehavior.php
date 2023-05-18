@@ -9,6 +9,7 @@ use AuditStash\Event\AuditUpdateEvent;
 use AuditStash\Persister\ElasticSearchPersister;
 use AuditStash\PersisterInterface;
 use Cake\Core\Configure;
+use Cake\Core\InstanceConfigTrait;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\Event;
 use Cake\ORM\Behavior;
@@ -198,6 +199,13 @@ class AuditLogBehavior extends Behavior
             $type = $this->getConfig('type') ?: Inflector::singularize($index);
 
             $persister = new $class(compact('index', 'type'));
+
+            /*
+             * @todo: I hope this can go away. I was not sure how to pass configs into the TablePersister.
+             */
+            if (in_array(InstanceConfigTrait::class, class_uses($persister))) {
+                $persister->setConfig(Configure::read('AuditStash.perister_config') ?? []);
+            }
         }
 
         if ($persister === null) {
