@@ -28,7 +28,7 @@ class AuditDeleteEvent implements EventInterface
         string $transactionId,
         mixed $id,
         string $source,
-        ?string $parentSource = null
+        ?string $parentSource = null,
     ) {
         $this->transactionId = $transactionId;
         $this->id = $id;

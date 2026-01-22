@@ -107,7 +107,7 @@ trait ExtractionTrait
         EventInterface $event,
         bool|array $fields,
         bool $unsetExtracted = true,
-        bool $serialize = true
+        bool $serialize = true,
     ): array {
         $extracted = [
             'meta' => $event->getMetaInfo(),
