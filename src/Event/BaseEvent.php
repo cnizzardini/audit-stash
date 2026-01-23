@@ -47,7 +47,7 @@ abstract class BaseEvent implements EventInterface
         string $source,
         ?array $changed,
         ?array $original,
-        ?EntityInterface $entity
+        ?EntityInterface $entity,
     ) {
         $this->transactionId = $transactionId;
         $this->id = $id;
