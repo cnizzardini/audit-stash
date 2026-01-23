@@ -7,6 +7,7 @@ use ArrayObject;
 use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Event\AuditUpdateEvent;
 use AuditStash\Model\Behavior\AuditLogBehavior;
+use Cake\Core\Configure;
 use Cake\Event\Event;
 use Cake\ORM\Entity;
 use Cake\ORM\Table;
@@ -28,7 +29,13 @@ class AuditLogBehaviorTest extends TestCase
         ]);
     }
 
-    public function testOnSaveCreateWithWithelist()
+    public function tearDown(): void
+    {
+        parent::tearDown();
+        Configure::write('AuditStash.saveType', null);
+    }
+
+    public function testOnSaveCreateWithWhitelist()
     {
         $data = [
             'id' => 13,
@@ -55,7 +62,7 @@ class AuditLogBehaviorTest extends TestCase
         $this->assertInstanceOf(AuditCreateEvent::class, $result);
     }
 
-    public function testOnSaveUpdateWithWithelist()
+    public function testOnSaveUpdateWithWhitelist()
     {
         $data = [
             'id' => 13,
@@ -159,5 +166,63 @@ class AuditLogBehaviorTest extends TestCase
         $this->assertEquals(13, $result->getId());
         $this->assertEquals('articles', $result->getSourceName());
         $this->assertInstanceOf(AuditCreateEvent::class, $result);
+    }
+
+    /**
+     * @dataProvider dataProviderForSaveType
+     */
+    public function testImplementedEvents(?string $saveType): void
+    {
+        Configure::write('AuditStash.saveType', $saveType);
+        $events = (new AuditLogBehavior(new Table()))->implementedEvents();
+        if ($saveType === 'afterSave') {
+            $this->assertArrayNotHasKey('Model.afterSaveCommit', $events);
+            $this->assertArrayNotHasKey('Model.afterDeleteCommit', $events);
+        } else {
+            $this->assertArrayHasKey('Model.afterSaveCommit', $events);
+            $this->assertArrayHasKey('Model.afterDeleteCommit', $events);
+        }
+    }
+
+    public static function dataProviderForSaveType(): array
+    {
+        return [
+            ['afterSave'],
+            ['afterCommit'],
+            [null],
+        ];
+    }
+
+    public function testSensitiveFields(): void
+    {
+        $behavior = new AuditLogBehavior($this->table, [
+            'whitelist' => ['id', 'title', 'body', 'author_id'],
+            'sensitive' => ['body'],
+        ]);
+
+        $data = [
+            'id' => 13,
+            'title' => 'The Title',
+            'body' => 'The Body',
+            'author_id' => 1,
+        ];
+        $entity = new Entity($data, ['markNew' => false, 'markClean' => true]);
+        $entity->body = 'The changed body';
+
+        $event = new Event('Model.afterSave');
+        $queue = new SplObjectStorage();
+        $behavior->afterSave($event, $entity, new ArrayObject([
+            '_auditQueue' => $queue,
+            '_auditTransaction' => '1',
+            'associated' => [],
+        ]));
+
+        $event = $queue[$entity];
+
+        $this->assertInstanceOf(AuditUpdateEvent::class, $event);
+
+        $changed = $event->getChanged();
+        $this->assertArrayHasKey('body', $changed);
+        $this->assertEquals('****', $changed['body']);
     }
 }

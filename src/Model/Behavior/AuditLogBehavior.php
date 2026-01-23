@@ -7,6 +7,7 @@ use ArrayObject;
 use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Event\AuditDeleteEvent;
 use AuditStash\Event\AuditUpdateEvent;
+use AuditStash\Event\BaseEvent;
 use AuditStash\Persister\ElasticSearchPersister;
 use AuditStash\PersisterInterface;
 use Cake\Core\Configure;
@@ -34,6 +35,7 @@ class AuditLogBehavior extends Behavior
         'type' => null,
         'blacklist' => ['created', 'modified'],
         'whitelist' => [],
+        'sensitive' => [],
     ];
 
     /**
@@ -55,8 +57,6 @@ class AuditLogBehavior extends Behavior
             'Model.beforeDelete' => 'injectTracking',
             'Model.afterSave' => 'afterSave',
             'Model.afterDelete' => 'afterDelete',
-            'Model.afterSaveCommit' => 'afterCommit',
-            'Model.afterDeleteCommit' => 'afterCommit',
         ];
 
         if (Configure::read('AuditStash.saveType') !== 'afterSave') {
@@ -88,6 +88,54 @@ class AuditLogBehavior extends Behavior
         if (!isset($options['_auditQueue'])) {
             $options['_auditQueue'] = new SplObjectStorage();
         }
+    }
+
+    /**
+     * Redacts sensitive fields from the array
+     *
+     * @param array<string, mixed> $fields Field
+     * @return void
+     */
+    private function redactArray(array &$fields): void
+    {
+        $sensitive = $this->_config['sensitive'] ?? [];
+        if ($sensitive === []) {
+            return;
+        }
+
+        foreach ($fields as $field => &$value) {
+            if (in_array($field, $sensitive, true)) {
+                $value = '****';
+            }
+        }
+    }
+
+    /**
+     * Creates an audit event for the entity change.
+     *
+     * @param string $transactionId Transaction Id
+     * @param \Cake\Datasource\EntityInterface $entity Entity
+     * @param array<string, mixed> $changed Changed fields
+     * @param array<string, mixed> $original Original fields
+     * @return \AuditStash\Event\BaseEvent
+     */
+    protected function createEvent(
+        string $transactionId,
+        EntityInterface $entity,
+        array $changed,
+        array $original
+    ): BaseEvent {
+        $primary = $entity->extract((array)$this->_table->getPrimaryKey());
+        $auditEvent = $entity->isNew() ? AuditCreateEvent::class : AuditUpdateEvent::class;
+
+        return new $auditEvent(
+            $transactionId,
+            $primary,
+            $this->_table->getTable(),
+            $changed,
+            $original,
+            $entity
+        );
     }
 
     /**
@@ -125,6 +173,7 @@ class AuditLogBehavior extends Behavior
         }
 
         $original = $entity->extractOriginal(array_keys($changed));
+
         $properties = $this->getAssociationProperties(array_keys($options['associated']));
         foreach ($properties as $property) {
             unset($changed[$property], $original[$property]);
@@ -134,11 +183,11 @@ class AuditLogBehavior extends Behavior
             return;
         }
 
-        $primary = $entity->extract((array)$this->_table->getPrimaryKey());
-        $auditEvent = $entity->isNew() ? AuditCreateEvent::class : AuditUpdateEvent::class;
+        $this->redactArray($changed);
+        $this->redactArray($original);
 
         $transaction = $options['_auditTransaction'];
-        $auditEvent = new $auditEvent($transaction, $primary, $this->_table->getTable(), $changed, $original, $entity);
+        $auditEvent = $this->createEvent($transaction, $entity, $changed, $original);
 
         if (!empty($options['_sourceTable'])) {
             $auditEvent->setParentSourceName($options['_sourceTable']->getTable());
