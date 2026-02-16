@@ -32,7 +32,7 @@ trait ExtractionTrait
             'created' => new DateTime($event->getTimestamp()),
         ];
 
-        if (TypeFactory::getMapped('datetime') !== DateTimeType::class) {
+        if (TypeFactory::getMap('datetime') !== DateTimeType::class) {
             $fields['created'] = (new DateTime($event->getTimestamp()))->format('Y-m-d H:i:s');
         }
 
