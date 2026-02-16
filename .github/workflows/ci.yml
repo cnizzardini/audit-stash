@@ -27,7 +27,6 @@ jobs:
         run: php -v
 
       - name: Install dependencies
-        if: steps.composer-cache.outputs.cache-hit != 'true'
         run: |
           composer self-update
           composer validate
@@ -72,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: ['~5.0.0']
+        version: ['~5.0.0', '^5.0']
 
     services:
       elasticsearch:

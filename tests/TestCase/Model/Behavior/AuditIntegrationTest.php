@@ -97,7 +97,7 @@ class AuditIntegrationTest extends TestCase
     {
         $entity = $this->table->get(1);
         $entity->title = 'Changed title';
-        $entity->published = 'Y';
+        $entity->published = 'N';
 
         $this->persister
             ->expects($this->once())
@@ -111,7 +111,7 @@ class AuditIntegrationTest extends TestCase
                 $this->assertEquals('articles', $event->getSourceName());
                 $expected = [
                     'title' => 'Changed title',
-                    'published' => 'Y',
+                    'published' => 'N',
                 ];
                 $this->assertEquals($expected, $event->getChanged());
                 $this->assertNotEmpty($event->getTransactionId());
