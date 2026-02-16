@@ -79,7 +79,7 @@ class AuditLogBehavior extends Behavior
     public function injectTracking(
         Event $event,
         EntityInterface $entity,
-        ArrayObject $options
+        ArrayObject $options,
     ): void {
         if (!isset($options['_auditTransaction'])) {
             $options['_auditTransaction'] = Text::uuid();
@@ -123,7 +123,7 @@ class AuditLogBehavior extends Behavior
         string $transactionId,
         EntityInterface $entity,
         array $changed,
-        array $original
+        array $original,
     ): BaseEvent {
         $primary = $entity->extract((array)$this->_table->getPrimaryKey());
         $auditEvent = $entity->isNew() ? AuditCreateEvent::class : AuditUpdateEvent::class;
@@ -134,7 +134,7 @@ class AuditLogBehavior extends Behavior
             $this->_table->getTable(),
             $changed,
             $original,
-            $entity
+            $entity,
         );
     }
 
@@ -150,7 +150,7 @@ class AuditLogBehavior extends Behavior
     public function afterSave(
         Event $event,
         EntityInterface $entity,
-        ArrayObject $options
+        ArrayObject $options,
     ): void {
         if (!isset($options['_auditQueue'])) {
             return;
@@ -161,7 +161,7 @@ class AuditLogBehavior extends Behavior
             $config['whitelist'] = $this->_table->getSchema()->columns();
             $config['whitelist'] = array_merge(
                 $config['whitelist'],
-                $this->getAssociationProperties(array_keys($options['associated']))
+                $this->getAssociationProperties(array_keys($options['associated'])),
             );
         }
 
@@ -211,14 +211,14 @@ class AuditLogBehavior extends Behavior
     public function afterCommit(
         Event $event,
         EntityInterface $entity,
-        ArrayObject $options
+        ArrayObject $options,
     ): void {
         if (!isset($options['_auditQueue'])) {
             return;
         }
 
         $events = collection($options['_auditQueue'])
-            ->map(fn ($entity, $pos, $it): mixed => $it->getInfo())
+            ->map(fn($entity, $pos, $it): mixed => $it->getInfo())
             ->toList();
 
         if (empty($events)) {
@@ -240,7 +240,7 @@ class AuditLogBehavior extends Behavior
     public function afterDelete(
         Event $event,
         EntityInterface $entity,
-        ArrayObject $options
+        ArrayObject $options,
     ): void {
         if (!isset($options['_auditQueue'])) {
             return;

@@ -32,7 +32,7 @@ trait ExtractionTrait
             'created' => new DateTime($event->getTimestamp()),
         ];
 
-        if (TypeFactory::getMap('datetime') !== DateTimeType::class) {
+        if (TypeFactory::getMapped('datetime') !== DateTimeType::class) {
             $fields['created'] = (new DateTime($event->getTimestamp()))->format('Y-m-d H:i:s');
         }
 
@@ -107,7 +107,7 @@ trait ExtractionTrait
         EventInterface $event,
         bool|array $fields,
         bool $unsetExtracted = true,
-        bool $serialize = true
+        bool $serialize = true,
     ): array {
         $extracted = [
             'meta' => $event->getMetaInfo(),
