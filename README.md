@@ -9,3 +9,5 @@ familiar with him. I have migrated my application to version 0.3.1 https://githu
 which is compatible with version 4.2.2 of this project.
 
 Simply replace `lorenzo/audit-stash` with `dereuromark/cakephp-audit-stash:^0.3.1` in your `composer.json` file.
+
+The original project README is available at README.old.md
